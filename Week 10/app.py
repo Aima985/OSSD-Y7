@@ -1,92 +1,90 @@
 import os
 import tkinter as tk
+from tkinter import messagebox
 
-DATA_FILE = "users.txt"
+FILE_NAME = "users.txt"
 
-# Read saved username and password pairs from a file.
+
+# ---------------- FILE HANDLING ----------------
 def read_file():
     users = {}
-    if not os.path.exists(DATA_FILE):
-        return users
-
-    with open(DATA_FILE, "r", encoding="utf-8") as data:
-        for line in data:
-            line = line.strip()
-            if not line or ":" not in line:
-                continue
-            username, password = line.split(":", 1)
-            users[username] = password
+    try:
+        with open(FILE_NAME, "r") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    username, password = line.split(",")
+                    users[username] = password
+    except FileNotFoundError:
+        pass
+    return users
 
     return users
 
-# Write all username/password pairs back to the file.
-def write_file(users):
-    with open(DATA_FILE, "w", encoding="utf-8") as data:
-        for username, password in users.items():
-            data.write(f"{username}:{password}\n")
+def write_file(username, password):
+    with open(FILE_NAME, "a") as f:
+        f.write(f"{username},{password}\n")
 
-# Try to log in with the entered username and password.
+
+# ---------------- LOGIN FUNCTION ----------------
 def login():
-    username = entry_username.get().strip()
-    password = entry_password.get().strip()
-
-    if not username or not password:
-        message_label.config(text="Please enter both username and password.", fg="red")
-        return
+    username = entry_user.get()
+    password = entry_pass.get()
 
     users = read_file()
+
     if username in users and users[username] == password:
-        message_label.config(text="Login successful! Welcome back.", fg="green")
+        messagebox.showinfo("Success", "Login Successful!")
+        main_screen()
     else:
-        message_label.config(text="Login failed. Check username/password.", fg="red")
+        messagebox.showerror("Error", "Invalid username or password")
 
-# Create a new account if the username is not already taken.
+
+# ---------------- SIGNUP FUNCTION ----------------
 def signup():
-    username = entry_username.get().strip()
-    password = entry_password.get().strip()
+    username = entry_user.get()
+    password = entry_pass.get()
 
-    if not username or not password:
-        message_label.config(text="Please enter both username and password.", fg="red")
+    if username == "" or password == "":
+        messagebox.showwarning("Warning", "Fields cannot be empty")
         return
 
     users = read_file()
+
     if username in users:
-        message_label.config(text="Username already exists. Choose another.", fg="red")
-        return
-
-    users[username] = password
-    write_file(users)
-    message_label.config(text="Signup successful! You can now log in.", fg="green")
-
-# Set up the Tkinter UI elements.
-def main():
-    global entry_username, entry_password, message_label
-
-    root.title("Login System")
-    root.geometry("320x220")
-    root.resizable(False, False)
-
-    frame = tk.Frame(root, padx=16, pady=16)
-    frame.pack(expand=True, fill="both")
-
-    tk.Label(frame, text="Username:", anchor="w").grid(row=0, column=0, sticky="w")
-    entry_username = tk.Entry(frame, width=30)
-    entry_username.grid(row=0, column=1, pady=8)
-
-    tk.Label(frame, text="Password:", anchor="w").grid(row=1, column=0, sticky="w")
-    entry_password = tk.Entry(frame, width=30, show="*")
-    entry_password.grid(row=1, column=1, pady=8)
-
-    login_button = tk.Button(frame, text="Login", width=12, command=login)
-    login_button.grid(row=2, column=0, pady=12)
-
-    signup_button = tk.Button(frame, text="Signup", width=12, command=signup)
-    signup_button.grid(row=2, column=1, pady=12)
-
-    message_label = tk.Label(frame, text="", fg="blue")
-    message_label.grid(row=3, column=0, columnspan=2, pady=8)
+        messagebox.showerror("Error", "User already exists")
+    else:
+        write_file(username, password)
+        messagebox.showinfo("Success", "Account created!")
 
 
+# ---------------- MAIN SCREEN AFTER LOGIN ----------------
+def main_screen():
+    for widget in root.winfo_children():
+        widget.destroy()
+
+    tk.Label(root, text="Welcome!", font=("Arial", 20)).pack(pady=30)
+    tk.Label(root, text="You are logged in.", font=("Arial", 14)).pack()
+
+
+# ---------------- MAIN GUI ----------------
 root = tk.Tk()
-main()
+root.title("Login System")
+root.geometry("300x250")
+
+
+tk.Label(root, text="Username").pack()
+entry_user = tk.Entry(root)
+entry_user.pack()
+
+tk.Label(root, text="Password").pack()
+entry_pass = tk.Entry(root, show="*")
+entry_pass.pack()
+
+
+tk.Button(root, text="Login", command=login).pack(pady=5)
+tk.Button(root, text="Signup", command=signup).pack(pady=5)
+
+
 root.mainloop()
+print("Hello, World!")
